@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rust Browser</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(255,255,255,.75), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 85% 85%, rgba(125,211,252,.45), transparent 60%),
+      linear-gradient(135deg, #e8f7ff 0%, #c9ecfd 48%, #a7dcf9 100%);
+    color: #0c3a54;
+    gap: 26px;
+    padding: 40px 20px;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-img {
+    width: 96px;
+    height: 96px;
+    border-radius: 24px;
+    box-shadow: 0 12px 34px rgba(14, 116, 144, .35), 0 0 0 6px rgba(255, 255, 255, .55);
+    animation: float 4s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+  .title { font-size: 46px; font-weight: 700; letter-spacing: -1.5px; }
+  .title span { color: #0288d1; }
+  .subtitle { color: #4e7f99; font-size: 15px; margin-top: -8px; }
+
+  form {
+    display: flex;
+    width: min(560px, 85vw);
+    background: rgba(255, 255, 255, .68);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, .95);
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 10px 34px rgba(14, 116, 144, .16);
+    transition: box-shadow .2s, transform .2s;
+  }
+  form:focus-within {
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, .3), 0 12px 36px rgba(14, 116, 144, .2);
+    transform: translateY(-1px);
+  }
+  form input {
+    flex: 1;
+    padding: 16px 24px;
+    font-size: 17px;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #0c3a54;
+  }
+  form input::placeholder { color: #7fa9bf; }
+  form button {
+    margin: 6px;
+    padding: 0 26px;
+    font-size: 15px;
+    font-weight: 600;
+    background: linear-gradient(180deg, #38bdf8, #0288d1);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(2, 136, 209, .35);
+    transition: transform .12s, box-shadow .12s;
+  }
+  form button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(2, 136, 209, .45);
+  }
+
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 14px;
+    width: min(560px, 85vw);
+  }
+  .links a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    text-decoration: none;
+    color: #14506e;
+    background: rgba(255, 255, 255, .58);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, .9);
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(14, 116, 144, .1);
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .links a:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, .85);
+    box-shadow: 0 12px 26px rgba(14, 116, 144, .2);
+  }
+  .links .icon { font-size: 26px; }
+
+  footer { color: #6ea6c0; font-size: 12px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div class="brand">
+    <img src="logo.png" class="logo-img" alt="Rust Browser logo">
+    <div class="title"><span>Rust</span> Browser</div>
+    <div class="subtitle">Fast. Light. Frosty cold. Built in Rust.</div>
+  </div>
+
+  <form action="https://lite.duckduckgo.com/lite/" method="get">
+    <input type="text" name="q" placeholder="Search the web (DuckDuckGo Lite)..." autofocus>
+    <button type="submit">Search</button>
+  </form>
+
+  <div class="links">
+    <a href="https://www.google.com"><span class="icon">&#x1F50D;</span>Google</a>
+    <a href="https://www.youtube.com"><span class="icon">&#x25B6;&#xFE0F;</span>YouTube</a>
+    <a href="https://github.com"><span class="icon">&#x1F419;</span>GitHub</a>
+    <a href="https://www.reddit.com"><span class="icon">&#x1F47E;</span>Reddit</a>
+    <a href="https://en.wikipedia.org"><span class="icon">&#x1F4DA;</span>Wikipedia</a>
+    <a href="https://x.com"><span class="icon">&#x1D54F;</span>X</a>
+  </div>
+
+  <footer>
+    <a href="settings" style="color:#3a7ea0; text-decoration:none; font-weight:600;">&#x2699; Settings</a>
+    &nbsp;&#8212;&nbsp; Powered by WebView2 + Rust &#8212; no Electron, no bloat
+  </footer>
+</body>
+</html>

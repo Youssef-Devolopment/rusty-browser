@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse 70% 50% at 15% 0%, rgba(255,255,255,.7), transparent 60%),
+      linear-gradient(135deg, #e8f7ff 0%, #c9ecfd 50%, #a7dcf9 100%);
+    color: #0c3a54;
+    padding: 48px 24px;
+    display: flex;
+    justify-content: center;
+  }
+  .card {
+    width: min(640px, 92vw);
+    background: rgba(255, 255, 255, .66);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, .95);
+    border-radius: 22px;
+    padding: 34px 38px;
+    box-shadow: 0 16px 44px rgba(14, 116, 144, .18);
+  }
+  h1 { font-size: 28px; margin-bottom: 6px; }
+  h1 span { color: #0288d1; }
+  .sub { color: #4e7f99; font-size: 14px; margin-bottom: 28px; }
+
+  h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #3a7ea0;
+    margin: 26px 0 12px;
+  }
+  select {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    border: 1px solid #b6ddf3;
+    border-radius: 12px;
+    background: #fff;
+    color: #0c3a54;
+    outline: none;
+    cursor: pointer;
+  }
+  select:focus { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.25); }
+
+  .ext-list { display: flex; flex-direction: column; gap: 10px; }
+  .ext {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,.75);
+    border: 1px solid rgba(255,255,255,.95);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  .ext .name { flex: 1; font-weight: 600; }
+  .ext .file { color: #7fa9bf; font-size: 12px; font-weight: 400; }
+  .empty { color: #7fa9bf; font-size: 14px; font-style: italic; }
+
+  /* Toggle switch */
+  .switch { position: relative; width: 44px; height: 24px; flex: 0 0 auto; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; inset: 0;
+    background: #c4dce9;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .slider::before {
+    content: '';
+    position: absolute;
+    width: 18px; height: 18px;
+    left: 3px; top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform .2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,.25);
+  }
+  .switch input:checked + .slider { background: linear-gradient(180deg, #38bdf8, #0288d1); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+
+  .note {
+    font-size: 12.5px;
+    color: #5b8ba6;
+    background: rgba(255,255,255,.55);
+    border-left: 3px solid #38bdf8;
+    padding: 10px 14px;
+    border-radius: 0 10px 10px 0;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+  code {
+    background: rgba(2,136,209,.1);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 12px;
+  }
+
+  .actions { margin-top: 30px; display: flex; gap: 12px; align-items: center; }
+  button.save {
+    padding: 12px 34px;
+    font-size: 15px;
+    font-weight: 600;
+    background: linear-gradient(180deg, #38bdf8, #0288d1);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    box-shadow: 0 5px 16px rgba(2,136,209,.35);
+    transition: transform .12s, box-shadow .12s;
+  }
+  button.save:hover { transform: translateY(-1px); box-shadow: 0 7px 20px rgba(2,136,209,.45); }
+  #saved { color: #0d9488; font-weight: 600; opacity: 0; transition: opacity .25s; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1><span>Rust</span> Browser Settings</h1>
+    <div class="sub">Changes are saved to <code>%LOCALAPPDATA%\Rust Browser\settings.json</code></div>
+
+    <h2>Search engine</h2>
+    <select id="engine">
+      <option value="ddg">DuckDuckGo Lite (fast &amp; light)</option>
+      <option value="google">Google</option>
+      <option value="bing">Bing</option>
+    </select>
+
+    <h2>Extensions</h2>
+    <div class="ext-list" id="ext-list">
+      <div class="empty">Loading…</div>
+    </div>
+    <div class="note">
+      Add your own extensions: drop any <code>.js</code> file into
+      <code>%LOCALAPPDATA%\Rust Browser\extensions</code> and restart the browser.
+      Use a <code>// @name My Extension</code> comment to name it.
+      Changes apply to newly opened tabs.
+    </div>
+
+    <div class="actions">
+      <button class="save" id="save">Save settings</button>
+      <span id="saved">Saved ✓</span>
+    </div>
+  </div>
+
+<script>
+  const send = o => window.ipc.postMessage(JSON.stringify(o));
+  let state = { search_engine: 'ddg', extensions: [] };
+
+  // Ask Rust for the current settings.
+  send({ cmd: 'getsettings' });
+
+  // Called by Rust with the settings payload.
+  function applySettings(s) {
+    state = s;
+    document.getElementById('engine').value = s.search_engine;
+    renderExts();
+  }
+
+  function renderExts() {
+    const list = document.getElementById('ext-list');
+    list.innerHTML = '';
+    if (!state.extensions.length) {
+      list.innerHTML = '<div class="empty">No extensions found in the extensions folder.</div>';
+      return;
+    }
+    for (const e of state.extensions) {
+      const row = document.createElement('div');
+      row.className = 'ext';
+
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = e.name + ' ';
+      const file = document.createElement('span');
+      file.className = 'file';
+      file.textContent = e.file;
+      name.appendChild(file);
+
+      const sw = document.createElement('label');
+      sw.className = 'switch';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = e.enabled;
+      cb.dataset.file = e.file;
+      const slider = document.createElement('span');
+      slider.className = 'slider';
+      sw.appendChild(cb);
+      sw.appendChild(slider);
+
+      row.appendChild(name);
+      row.appendChild(sw);
+      list.appendChild(row);
+    }
+  }
+
+  document.getElementById('save').addEventListener('click', () => {
+    const exts = [...document.querySelectorAll('#ext-list input[type=checkbox]')].map(cb => ({
+      file: cb.dataset.file,
+      enabled: cb.checked,
+    }));
+    send({
+      cmd: 'savesettings',
+      settings: {
+        search_engine: document.getElementById('engine').value,
+        extensions: exts,
+      },
+    });
+    // Rust replies with settingsSaved() which flashes the checkmark.
+  });
+
+  // Called by Rust after the file is written.
+  function settingsSaved() {
+    const s = document.getElementById('saved');
+    s.style.opacity = '1';
+    setTimeout(() => { s.style.opacity = '0'; }, 1800);
+  }
+</script>
+</body>
+</html>

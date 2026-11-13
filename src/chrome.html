@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Browser UI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    height: 88px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, #e3f5ff 0%, #c9e9fa 100%);
+    color: #0e4260;
+    transition: background .3s;
+  }
+
+  /* --- Tab strip --- */
+  .tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 36px;
+    padding: 5px 8px 0;
+    background: rgba(255, 255, 255, .28);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    min-width: 110px;
+    max-width: 190px;
+    padding: 0 6px 0 12px;
+    background: rgba(255, 255, 255, .5);
+    border: 1px solid rgba(255, 255, 255, .8);
+    border-bottom: none;
+    border-radius: 9px 9px 0 0;
+    color: #1d5a7d;
+    font-size: 12px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    transition: background .15s, transform .15s;
+  }
+  .tab:hover { background: rgba(255, 255, 255, .8); }
+  .tab.active {
+    background: #ffffff;
+    color: #0c3a54;
+    font-weight: 600;
+    box-shadow: 0 -3px 10px rgba(14, 96, 140, .12);
+    border-color: #fff;
+  }
+  .tab.active::before {
+    content: '';
+    position: absolute;
+    /* accent line along the top of the active tab */
+  }
+  .tab span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tab .close {
+    border: none;
+    background: transparent;
+    color: inherit;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    flex: 0 0 auto;
+    opacity: .65;
+    transition: background .1s, opacity .1s;
+  }
+  .tab .close:hover { background: #d7eefb; opacity: 1; }
+  #newtab {
+    border: none;
+    background: transparent;
+    color: #2b7fa6;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 1px;
+    flex: 0 0 auto;
+    transition: background .15s, transform .15s;
+  }
+  #newtab:hover { background: rgba(255, 255, 255, .8); transform: scale(1.08); }
+
+  /* --- Address bar row --- */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 52px;
+    padding: 0 10px;
+  }
+  .bar button {
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: #256f95;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background .15s, color .15s, transform .1s;
+  }
+  .bar button:hover { background: rgba(255, 255, 255, .8); color: #0c3a54; }
+  .bar button:active { transform: scale(.94); }
+  .bar button:disabled { opacity: .28; cursor: default; background: transparent; transform: none; }
+  #url {
+    flex: 1;
+    height: 34px;
+    border: 1px solid #b6ddf3;
+    border-radius: 17px;
+    background: #ffffff;
+    color: #0c3a54;
+    padding: 0 18px;
+    font-size: 14px;
+    outline: none;
+    box-shadow: inset 0 1px 3px rgba(14, 96, 140, .08);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  #url::placeholder { color: #86acc4; }
+  #url:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, .28), inset 0 1px 3px rgba(14, 96, 140, .06);
+  }
+  #go {
+    width: auto !important;
+    height: 34px;
+    padding: 0 20px;
+    border-radius: 17px !important;
+    font-size: 13px;
+    font-weight: 600;
+    background: linear-gradient(180deg, #38bdf8, #0288d1) !important;
+    color: #fff !important;
+    box-shadow: 0 3px 10px rgba(2, 136, 209, .3);
+  }
+  #go:hover {
+    background: linear-gradient(180deg, #4ec8fa, #0397e0) !important;
+    color: #fff !important;
+  }
+</style>
+</head>
+<body>
+  <div class="tabs" id="tabstrip">
+    <button id="newtab" title="New tab">+</button>
+  </div>
+
+  <div class="bar">
+    <button id="back" title="Back">&#8592;</button>
+    <button id="fwd" title="Forward">&#8594;</button>
+    <button id="reload" title="Reload">&#10227;</button>
+    <input id="url" placeholder="Search or enter address" spellcheck="false" autocomplete="off">
+    <button id="go">Go</button>
+  </div>
+
+<script>
+  // Send a command to the Rust backend.
+  const send = o => window.ipc.postMessage(JSON.stringify(o));
+  const url = document.getElementById('url');
+
+  const navigate = () => {
+    const v = url.value.trim();
+    if (v) send({ cmd: 'navigate', url: v });
+  };
+
+  url.addEventListener('keydown', e => { if (e.key === 'Enter') navigate(); });
+  url.addEventListener('focus', () => url.select());
+  document.getElementById('go').addEventListener('click', navigate);
+  document.getElementById('back').addEventListener('click', () => send({ cmd: 'back' }));
+  document.getElementById('fwd').addEventListener('click', () => send({ cmd: 'forward' }));
+  document.getElementById('reload').addEventListener('click', () => send({ cmd: 'reload' }));
+  document.getElementById('newtab').addEventListener('click', () => send({ cmd: 'newtab' }));
+
+  // --- functions called from Rust ---
+  function renderTabs(list) {
+    const strip = document.getElementById('tabstrip');
+    const newBtn = document.getElementById('newtab');
+    strip.querySelectorAll('.tab').forEach(el => el.remove());
+    for (const t of list) {
+      const el = document.createElement('div');
+      el.className = 'tab' + (t.active ? ' active' : '');
+      el.title = t.title;
+
+      const label = document.createElement('span');
+      label.textContent = t.title;
+
+      const close = document.createElement('button');
+      close.className = 'close';
+      close.title = 'Close tab';
+      close.textContent = '\u00d7';
+      close.addEventListener('click', e => {
+        e.stopPropagation();
+        send({ cmd: 'closetab', id: t.id });
+      });
+
+      el.appendChild(label);
+      el.appendChild(close);
+      el.addEventListener('click', () => send({ cmd: 'switchtab', id: t.id }));
+      strip.insertBefore(el, newBtn);
+    }
+  }
+  function updateUrl(u) {
+    // Don't clobber what the user is typing.
+    if (document.activeElement !== url) url.value = u;
+  }
+  function updateNav(canBack, canFwd) {
+    document.getElementById('back').disabled = !canBack;
+    document.getElementById('fwd').disabled = !canFwd;
+  }
+  function focusUrl() { url.focus(); }
+
+  // Tell Rust the DOM is ready so it can push the initial state.
+  window.addEventListener('load', () => send({ cmd: 'ready' }));
+</script>
+</body>
+</html>
